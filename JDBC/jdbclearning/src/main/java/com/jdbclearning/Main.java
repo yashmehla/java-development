@@ -1,70 +1,74 @@
 package com.jdbclearning;
 import java.sql.*;
+import java.util.Scanner;
+
 public class Main {
     public static void main(String[] args) throws ClassNotFoundException {
-        Class.forName("com.mysql.cj.jdbc.Driver");
+        Statement stmt = null;
+        Connection connect = null;
+        PreparedStatement prepstatement = null;
         try {
-            String url = "jdbc:mysql://localhost:3306/";
-            String user = "DEMOUSER";
-            String password = "DEMOPASS";
-
-            // Connection is a interface
-            Connection db = DriverManager.getConnection(url, user, password);
-            System.out.println("Connected!");
-
-            // create statement
-            Statement stmt = db.createStatement();
-
-            //Create database
-            String createDatabase = "CREATE DATABASE IF NOT EXISTS jdbc2";
-
-
-            // execute query
-            stmt.executeUpdate(createDatabase);
-            System.out.println("Database 'jdbc2' created.");
-            // Use database
-            stmt.executeUpdate("USE jdbc2");
-            System.out.println("Using database 'jdbc2'.");
+            connect = JdbcUtil.getConnection();
+            stmt = connect.createStatement();
+            System.out.println("Using database 'jdbc_demo'.");
             // Create students table
             String createTable = """
-                    CREATE TABLE IF NOT EXISTS students (
+                    CREATE TABLE IF NOT EXISTS studentinfo (
                         id INT PRIMARY KEY AUTO_INCREMENT,
-                        name VARCHAR(100) NOT NULL,
-                        age INT,
-                        course VARCHAR(100)
+                        sname VARCHAR(100) NOT NULL,
+                        sage INT,
+                        scity VARCHAR(100)
                     )
                     """;
             stmt.executeUpdate(createTable);
             System.out.println("Table 'students' created.");
             // Insert student records
-            stmt.executeUpdate("INSERT INTO students(name, age, course) VALUES('Alice', 20, 'Computer Science')");
-            stmt.executeUpdate("INSERT INTO students(name, age, course) VALUES('Bob', 21, 'Mathematics')");
-            stmt.executeUpdate("INSERT INTO students(name, age, course) VALUES('Charlie', 19, 'Physics')");
-
-            System.out.println("Student records inserted.");
+            String query="INSERT INTO studentinfo(id,sname,sage,scity) VALUES(?,?,?,?)";
+            prepstatement = connect.prepareStatement(query);
+            Scanner scan = new Scanner(System.in);
+            System.out.println("Enter the following details to be put into DB");
+            System.out.println("Enter the ID of student : ");
+            Integer id = scan.nextInt();
+            System.out.println("Enter the name of student : ");
+            String name = scan.next();
+            System.out.println("Enter the age of student : ");
+            Integer age = scan.nextInt();
+            System.out.println("Enter the city of student : ");
+            String city = scan.next();
+            prepstatement.setInt(1, id);
+            prepstatement.setString(2,name);
+            prepstatement.setInt(3,age);
+            prepstatement.setString(4,city);
+            int rowsAffected = prepstatement.executeUpdate();
+            if(rowsAffected==0){
+                System.out.println("No data added.");
+            }
+            else {
+                System.out.println("Student records inserted.");
+            }
 
             // process the result
-            ResultSet rs = stmt.executeQuery("SELECT * FROM students");
+            ResultSet rs = stmt.executeQuery("SELECT * FROM studentinfo");
             System.out.println("\nStudents Table:");
             System.out.println("-------------------------------");
 
             while (rs.next()) {
-                int id = rs.getInt("id");
-                String name = rs.getString("name");
-                int age = rs.getInt("age");
-                String course = rs.getString("course");
+                int sid = rs.getInt("id");
+                String sname = rs.getString("sname");
+                int sage = rs.getInt("sage");
+                String scity = rs.getString("scity");
 
                 System.out.println(
-                        "ID: " + id +
-                                ", Name: " + name +
-                                ", Age: " + age +
-                                ", Course: " + course
+                        "ID: " + sid +
+                                ", Name: " + sname +
+                                ", Age: " + sage +
+                                ", City: " + scity
                 );
             }
 
             // close the query
-            stmt.close();
-            db.close(); // disconnecting the connection
+            prepstatement.close();
+            JdbcUtil.closeConnection(connect,stmt);
 
         } catch (SQLException e) {
             e.printStackTrace();
