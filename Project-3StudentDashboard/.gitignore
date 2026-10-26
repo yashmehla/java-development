@@ -1,0 +1,19 @@
+# Compiled Java bytecode
+*.class
+
+# Build output directories
+bin/
+out/
+target/
+
+# IDE and Editor files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS specific files
+.DS_Store
+Thumbs.db
